@@ -1,3 +1,3 @@
 export module RenderEngine;
 
-export import :Renderer;
+export import RenderEngine.Rendering;

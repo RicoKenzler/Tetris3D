@@ -140,12 +140,15 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="src\RenderEngine.ixx" />
-    <ClCompile Include="src\Renderer\Renderer.ixx">
+    <ClCompile Include="src\Rendering\Engine.cpp" />
+    <ClCompile Include="src\Rendering\Engine.ixx" />
+    <ClCompile Include="src\Rendering\Renderer.ixx">
       <FileType>Document</FileType>
     </ClCompile>
+    <ClCompile Include="src\Rendering\Rendering.ixx" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\Renderer\Renderer.cpp" />
+    <ClCompile Include="src\Rendering\Renderer.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

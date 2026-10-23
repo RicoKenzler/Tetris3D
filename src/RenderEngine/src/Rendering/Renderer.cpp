@@ -1,4 +1,4 @@
-module RenderEngine;
+module RenderEngine.Rendering;
 
 import :Renderer;
 

@@ -1,4 +1,4 @@
-export module RenderEngine:Renderer;
+export module RenderEngine.Rendering:Renderer;
 
 export namespace RenderEngine
 {

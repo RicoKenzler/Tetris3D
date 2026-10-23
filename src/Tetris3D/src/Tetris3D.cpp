@@ -1,12 +1,30 @@
-#include <iostream>
+#include <Windows.h>
+#include <stdexcept>
 
 import RenderEngine;
 
-int main()
+_Use_decl_annotations_
+int WINAPI wWinMain(
+    _In_ HINSTANCE instance,
+    _In_opt_ HINSTANCE,
+    _In_ PWSTR,
+    _In_ int showCommand)
 {
-    auto* const r = new RenderEngine::Renderer();
-	r->Render();
-    delete r;
+    try
+    {
+        RenderEngine::Engine engine{};
+        engine.Start(instance, showCommand);
+		return engine.Run();
+    }
+    catch (const std::exception& exception)
+    {
+        MessageBoxA(
+            nullptr,
+            exception.what(),
+            "Engine Error",
+            MB_OK | MB_ICONERROR
+        );
 
-    std::cout << "Hello World!\n";
+        return 1;
+    }
 }
