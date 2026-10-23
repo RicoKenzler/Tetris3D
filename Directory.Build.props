@@ -1,0 +1,6 @@
+<Project>
+  <PropertyGroup>
+    <OutDir>$(MSBuildThisFileDirectory)build\$(Platform)\$(Configuration)\bin\</OutDir>
+    <IntDir>$(MSBuildThisFileDirectory)build\$(Platform)\$(Configuration)\obj\$(MSBuildProjectName)\</IntDir>
+  </PropertyGroup>
+</Project>

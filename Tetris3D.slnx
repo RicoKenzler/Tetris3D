@@ -1,0 +1,10 @@
+<Solution>
+  <Configurations>
+    <Platform Name="x64" />
+    <Platform Name="x86" />
+  </Configurations>
+  <Project Path="src/Core/Core.vcxproj" Id="5c772020-b215-4645-b266-54759251873c" />
+  <Project Path="src/GameLogic/GameLogic.vcxproj" Id="b6bdb726-697f-43c2-819b-c712bfde4611" />
+  <Project Path="src/RenderEngine/RenderEngine.vcxproj" Id="c364e205-9ba2-4bc5-8685-8f647fad6c93" />
+  <Project Path="src/Tetris3D/Tetris3D.vcxproj" Id="a9309f20-7e22-4566-9b82-f6828b5934ad" />
+</Solution>
