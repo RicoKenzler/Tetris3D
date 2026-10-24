@@ -7,6 +7,8 @@ module;
 
 export module RenderEngine.Rendering:Renderer;
 
+export import :Camera;
+
 using Microsoft::WRL::ComPtr;
 
 export namespace RenderEngine
@@ -15,7 +17,7 @@ export namespace RenderEngine
     {
     public:
         void Initialize(HWND hwnd, UINT width, UINT height);
-        void Render();
+        void Render(float elapsedSeconds, const Camera& camera);
 		void ShutDown();
 
     private:

@@ -7,6 +7,8 @@
     <ClCompile Include="src\Rendering\Engine.ixx" />
     <ClCompile Include="src\Rendering\Engine.cpp" />
     <ClCompile Include="src\Rendering\Rendering.ixx" />
+    <ClCompile Include="src\Rendering\Camera.ixx" />
+    <ClCompile Include="src\Rendering\Camera.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="src\Shaders\Triangle.hlsl" />

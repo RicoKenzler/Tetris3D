@@ -140,6 +140,8 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="src\RenderEngine.ixx" />
+    <ClCompile Include="src\Rendering\Camera.cpp" />
+    <ClCompile Include="src\Rendering\Camera.ixx" />
     <ClCompile Include="src\Rendering\Engine.cpp" />
     <ClCompile Include="src\Rendering\Engine.ixx" />
     <ClCompile Include="src\Rendering\Renderer.ixx">

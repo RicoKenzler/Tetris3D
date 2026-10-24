@@ -5,6 +5,7 @@ module;
 export module RenderEngine.Rendering:Engine;
 
 import :Renderer;
+import :Camera;
 
 export namespace RenderEngine
 {
@@ -20,8 +21,10 @@ export namespace RenderEngine
 		static LRESULT CALLBACK WindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
 
 		void InitWindow(HINSTANCE instance);
+		void ProcessInput(float deltaTime);
 		
 		Renderer m_renderer;
+		Camera m_camera;
 		HWND m_hwnd = nullptr;
 	};
 }

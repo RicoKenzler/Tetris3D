@@ -17,6 +17,7 @@ module;
 module RenderEngine.Rendering;
 
 import :Renderer;
+import :Camera;
 
 using Microsoft::WRL::ComPtr;
 
@@ -39,7 +40,7 @@ namespace RenderEngine
 	void Renderer::Initialize(HWND hwnd, UINT width, UINT height)
 	{
 		m_aspectRatio = static_cast<float>(width) / static_cast<float>(height);
-
+		
 		CreateDevice();
 		CreateSwapChain(hwnd, width, height);
 		CreateRenderTarget(width, height);
@@ -47,19 +48,17 @@ namespace RenderEngine
 		CreateCubeResources();
 	}
 
-	void Renderer::Render()
+	void Renderer::Render(const float elapsedSeconds, const Camera& camera)
 	{
 		using namespace DirectX;
 
 		// Build the world matrix.
-		const XMMATRIX world = XMMatrixIdentity();
+		// Rotate the cube at 45 degrees per second.
+		constexpr float rotationSpeed = DirectX::XMConvertToRadians(45.0f);
+		const float angle = elapsedSeconds * rotationSpeed;
+		const XMMATRIX world = XMMatrixRotationX(angle);
 
-		// Configure the camera.
-		const XMVECTOR cameraPosition = XMVectorSet(3.0f, 3.0f, -5.0f, 1.0f);
-		const XMVECTOR cameraTarget = XMVectorZero();
-		const XMVECTOR cameraUp = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
-
-		const XMMATRIX view = XMMatrixLookAtLH(cameraPosition, cameraTarget, cameraUp);
+		const XMMATRIX view = camera.CalculateView();
 
 		// Build the perspective projection.
 		const XMMATRIX projection = XMMatrixPerspectiveFovLH(XMConvertToRadians(60.0f), m_aspectRatio, 0.1f, 100.0f);
@@ -78,7 +77,7 @@ namespace RenderEngine
 		// Bind the render target.
 		ID3D11RenderTargetView* renderTargets[] = { m_renderTarget.Get() };
 
-		m_context->OMSetRenderTargets(1, renderTargets, nullptr);
+		m_context->OMSetRenderTargets(1, renderTargets, m_depthStencilView.Get());
 
 		// Clear the back buffer.
 		constexpr float clearColor[4] =
