@@ -1,16 +1,14 @@
 module;
 
+#include <DirectXMath.h>
 #include <Windows.h>
-
-#include <d3d11.h>
-#include <dxgi1_2.h>
-#include <wrl/client.h>
 #include <cstdint>
-
-#include <stdexcept>
-
+#include <d3d11.h>
 #include <d3dcompiler.h>
+#include <dxgi1_2.h>
+#include <stdexcept>
 #include <string>
+#include <wrl/client.h>
 
 #pragma comment(lib, "d3d11.lib")
 #pragma comment(lib, "dxgi.lib")
@@ -30,22 +28,59 @@ namespace RenderEngine
 		float r, g, b;
 	};
 
+	struct TransformConstants
+	{
+		DirectX::XMFLOAT4X4 worldViewProjection;
+	};
+
+	static_assert(sizeof(TransformConstants) % 16 == 0);
+
+
 	void Renderer::Initialize(HWND hwnd, UINT width, UINT height)
 	{
+		m_aspectRatio = static_cast<float>(width) / static_cast<float>(height);
+
 		CreateDevice();
 		CreateSwapChain(hwnd, width, height);
 		CreateRenderTarget(width, height);
-		CreateRectangleResources();
+		CreateDepthBuffer(width, height);
+		CreateCubeResources();
 	}
 
 	void Renderer::Render()
 	{
-		// 1. Bind the render target.
+		using namespace DirectX;
+
+		// Build the world matrix.
+		const XMMATRIX world = XMMatrixIdentity();
+
+		// Configure the camera.
+		const XMVECTOR cameraPosition = XMVectorSet(3.0f, 3.0f, -5.0f, 1.0f);
+		const XMVECTOR cameraTarget = XMVectorZero();
+		const XMVECTOR cameraUp = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
+
+		const XMMATRIX view = XMMatrixLookAtLH(cameraPosition, cameraTarget, cameraUp);
+
+		// Build the perspective projection.
+		const XMMATRIX projection = XMMatrixPerspectiveFovLH(XMConvertToRadians(60.0f), m_aspectRatio, 0.1f, 100.0f);
+
+		// Combine the transformation matrices.
+		const XMMATRIX wvp = world * view * projection;
+
+		TransformConstants constants{};
+
+		XMStoreFloat4x4(&constants.worldViewProjection, XMMatrixTranspose(wvp));
+
+		// Upload the transformation to the GPU.
+		m_context->UpdateSubresource(m_transformBuffer.Get(), 0, nullptr, &constants, 0, 0);
+
+
+		// Bind the render target.
 		ID3D11RenderTargetView* renderTargets[] = { m_renderTarget.Get() };
 
 		m_context->OMSetRenderTargets(1, renderTargets, nullptr);
 
-		// 2. Clear the back buffer.
+		// Clear the back buffer.
 		constexpr float clearColor[4] =
 		{
 			0.05f, 0.10f, 0.18f, 1.0f
@@ -53,16 +88,15 @@ namespace RenderEngine
 
 		m_context->ClearRenderTargetView(m_renderTarget.Get(), clearColor);
 
-		// 3. Configure the input assembler.
+		m_context->ClearDepthStencilView(m_depthStencilView.Get(), D3D11_CLEAR_DEPTH, 1.0f, 0);
+
+		// Configure the input assembler.
 		constexpr UINT stride = sizeof(Vertex);
 		constexpr UINT offset = 0;
 
-		ID3D11Buffer* vertexBuffers[] =
-		{
-			m_vertexBuffer.Get()
-		};
+		ID3D11Buffer* vertexBuffer = m_vertexBuffer.Get();
 
-		m_context->IASetVertexBuffers(0, 1, vertexBuffers, &stride, &offset);
+		m_context->IASetVertexBuffers(0, 1, &vertexBuffer, &stride, &offset);
 
 		m_context->IASetIndexBuffer(m_indexBuffer.Get(), DXGI_FORMAT_R16_UINT, 0);
 
@@ -70,15 +104,19 @@ namespace RenderEngine
 
 		m_context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
-		// 4. Bind the shaders.
+		// Bind the shaders.
 		m_context->VSSetShader(m_vertexShader.Get(), nullptr, 0);
 
 		m_context->PSSetShader(m_pixelShader.Get(), nullptr, 0);
 
-		// 5. Draw the triangle.
-		m_context->DrawIndexed(6, 0, 0);
+		ID3D11Buffer* constantBuffer = m_transformBuffer.Get();
 
-		// 6. Present the frame.
+		m_context->VSSetConstantBuffers(0, 1, &constantBuffer);
+
+		// Draw the triangle.
+		m_context->DrawIndexed(36, 0, 0);
+
+		// Present the frame.
 		HRESULT result = m_swapChain->Present(1, 0);
 		CheckHR(result, "Present failed");
 	}
@@ -166,26 +204,78 @@ namespace RenderEngine
 		m_context->RSSetViewports(1, &viewport);
 	}
 
-	void Renderer::CreateRectangleResources()
+	void Renderer::CreateDepthBuffer(UINT width, UINT height)
 	{
-		// 1. Define the rectangle vertices.
+		// Describe the depth-stencil texture.
+		D3D11_TEXTURE2D_DESC depthDesc{};
+
+		depthDesc.Width = width;
+		depthDesc.Height = height;
+		depthDesc.MipLevels = 1;
+		depthDesc.ArraySize = 1;
+		depthDesc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
+		depthDesc.SampleDesc.Count = 1;
+		depthDesc.Usage = D3D11_USAGE_DEFAULT;
+		depthDesc.BindFlags = D3D11_BIND_DEPTH_STENCIL;
+
+		// Create the depth-stencil texture.
+		ComPtr<ID3D11Texture2D> depthTexture;
+
+		HRESULT result = m_device->CreateTexture2D(&depthDesc, nullptr, depthTexture.GetAddressOf());
+		CheckHR(result, "Create depth texture failed");
+		
+		// Create a view for depth testing.
+		result = m_device->CreateDepthStencilView(depthTexture.Get(), nullptr, m_depthStencilView.GetAddressOf());
+		CheckHR(result, "Create depth stencil view failed");
+	}
+
+	void Renderer::CreateCubeResources()
+	{
+		// Eight corners of a cube centered at the origin.
 		constexpr Vertex vertices[] =
 		{
-			// Bottom-left
-			{ -0.65f, -0.45f, 0.0f, 1.0f, 0.0f, 0.0f },
+			{ -1.0f, -1.0f, -1.0f, 1.0f, 0.0f, 0.0f }, // 0
+			{ -1.0f,  1.0f, -1.0f, 0.0f, 1.0f, 0.0f }, // 1
+			{ 1.0f,  1.0f, -1.0f, 0.0f, 0.0f, 1.0f }, // 2
+			{ 1.0f, -1.0f, -1.0f, 1.0f, 1.0f, 0.0f }, // 3
 
-			// Top-left
-			{ -0.65f,  0.45f, 0.0f, 0.0f, 1.0f, 0.0f },
+			{ -1.0f, -1.0f,  1.0f, 0.0f, 1.0f, 1.0f }, // 4
+			{ -1.0f,  1.0f,  1.0f, 1.0f, 0.0f, 1.0f }, // 5
+			{ 1.0f,  1.0f,  1.0f, 1.0f, 1.0f, 1.0f }, // 6
+			{ 1.0f, -1.0f,  1.0f, 1.0f, 0.5f, 0.0f }  // 7
+		};
 
-			// Top-right
-			{ 0.65f,  0.45f, 0.0f, 0.0f, 0.0f, 1.0f },
+		// Each group of three indices defines one triangle.
+		// The winding order matches the default D3D11 rasterizer.
+		constexpr std::uint16_t indices[] =
+		{
+			// Front (-Z)
+			0, 1, 2,
+			0, 2, 3,
 
-			// Bottom-right
-			{ 0.65f, -0.45f, 0.0f, 1.0f, 1.0f, 0.0f }
+			// Back (+Z)
+			4, 6, 5,
+			4, 7, 6,
+
+			// Left (-X)
+			0, 4, 5,
+			0, 5, 1,
+
+			// Right (+X)
+			3, 2, 6,
+			3, 6, 7,
+
+			// Top (+Y)
+			1, 5, 6,
+			1, 6, 2,
+
+			// Bottom (-Y)
+			0, 3, 7,
+			0, 7, 4
 		};
 
 
-		// 2. Create the vertex buffer.
+		// Create the vertex buffer.
 		D3D11_BUFFER_DESC bufferDesc{};
 		bufferDesc.ByteWidth = static_cast<UINT>(sizeof(vertices));
 		bufferDesc.Usage = D3D11_USAGE_IMMUTABLE;
@@ -201,14 +291,6 @@ namespace RenderEngine
 		);
 		CheckHR(result, "CreateBuffer failed");
 
-
-
-		// Define two triangles using shared vertices.
-		constexpr std::uint16_t indices[] =
-		{
-			0, 1, 2,
-			0, 2, 3
-		};
 
 		// Describe the index buffer.
 		D3D11_BUFFER_DESC indexDesc{};
@@ -232,8 +314,9 @@ namespace RenderEngine
 
 
 		// 3. Compile the HLSL shaders.
-		ComPtr<ID3DBlob> vertexBytecode = CompileShader("VSMain", "vs_5_0");
-		ComPtr<ID3DBlob> pixelBytecode = CompileShader("PSMain", "ps_5_0");
+		const wchar_t* shaderPath = L"src\\RenderEngine\\src\\Shaders\\Cube.hlsl";
+		ComPtr<ID3DBlob> vertexBytecode = CompileShader(shaderPath, "VSMain", "vs_5_0");
+		ComPtr<ID3DBlob> pixelBytecode = CompileShader(shaderPath, "PSMain", "ps_5_0");
 
 
 		// 4. Create the Direct3D shader objects.
@@ -285,6 +368,16 @@ namespace RenderEngine
 			m_inputLayout.GetAddressOf()
 		);
 		CheckHR(result, "CreateInputLayout failed");
+
+
+		// Create a constant buffer for the WVP matrix.
+		D3D11_BUFFER_DESC constantBufferDesc{};
+		constantBufferDesc.ByteWidth = sizeof(TransformConstants);
+		constantBufferDesc.Usage = D3D11_USAGE_DEFAULT;
+		constantBufferDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+
+		result = m_device->CreateBuffer(&constantBufferDesc, nullptr, m_transformBuffer.GetAddressOf());
+		CheckHR(result, "Create transform buffer failed");
 	}
 
 	void Renderer::CheckHR(HRESULT result, const char* message)
@@ -293,7 +386,7 @@ namespace RenderEngine
 			throw std::runtime_error(message);
 	}
 
-	ComPtr<ID3DBlob> Renderer::CompileShader(const char* entry, const char* target) const
+	ComPtr<ID3DBlob> Renderer::CompileShader(const wchar_t* shaderPath, const char* entry, const char* target) const
 	{
 		ComPtr<ID3DBlob> bytecode;
 		ComPtr<ID3DBlob> errors;
@@ -306,7 +399,7 @@ namespace RenderEngine
 #endif
 
 		const HRESULT result = D3DCompileFromFile(
-			L"src\\RenderEngine\\src\\Shaders\\Triangle.hlsl",
+			shaderPath,
 			nullptr,
 			D3D_COMPILE_STANDARD_FILE_INCLUDE,
 			entry,
@@ -319,7 +412,7 @@ namespace RenderEngine
 
 		if (FAILED(result))
 		{
-			std::string message = "Failed to compile Shaders/Triangle.hlsl";
+			std::string message = "Failed to compile Shader";
 
 			if (errors)
 			{

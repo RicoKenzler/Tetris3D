@@ -22,11 +22,13 @@ export namespace RenderEngine
         void CreateDevice();
         void CreateSwapChain(HWND hwnd, UINT width, UINT height);
         void CreateRenderTarget(UINT width, UINT height);
-        void CreateRectangleResources();
+        void CreateDepthBuffer(UINT width, UINT height);
+        void CreateCubeResources();
 
         static void CheckHR(HRESULT result, const char* message);
 
-        [[nodiscard]] ComPtr<ID3DBlob> CompileShader(const char* entry, const char* target) const;
+        [[nodiscard]] ComPtr<ID3DBlob> CompileShader(const wchar_t* shaderPath, const char* entry, const char* target) const;
+
 
         // Direct3D resources are owned by the renderer.
         ComPtr<ID3D11Device> m_device;
@@ -39,5 +41,10 @@ export namespace RenderEngine
         ComPtr<ID3D11InputLayout> m_inputLayout;
         ComPtr<ID3D11Buffer> m_vertexBuffer;
         ComPtr<ID3D11Buffer> m_indexBuffer;
+
+        ComPtr<ID3D11DepthStencilView> m_depthStencilView;
+        ComPtr<ID3D11Buffer> m_transformBuffer;
+
+        float m_aspectRatio = 1.0f;
     };
 }

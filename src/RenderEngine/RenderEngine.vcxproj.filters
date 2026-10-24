@@ -10,5 +10,6 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="src\Shaders\Triangle.hlsl" />
+    <None Include="src\Shaders\Cube.hlsl" />
   </ItemGroup>
 </Project>
