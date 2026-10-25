@@ -6,6 +6,7 @@ export module RenderEngine.Rendering:Engine;
 
 import :Renderer;
 import :Camera;
+import RenderEngine.Input;
 
 export namespace RenderEngine
 {
@@ -22,7 +23,12 @@ export namespace RenderEngine
 
 		void InitWindow(HINSTANCE instance);
 		void ProcessInput(float deltaTime);
+		void CaptureMouse();
+		void ReleaseMouse();
 		
+		bool m_wasRightMousePressedLastFrame = false;
+		bool m_isMouseCaptured = false;
+		InputHandler m_inputHandler;
 		Renderer m_renderer;
 		Camera m_camera;
 		HWND m_hwnd = nullptr;

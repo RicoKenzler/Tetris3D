@@ -56,23 +56,7 @@ namespace RenderEngine
 		// Rotate the cube at 45 degrees per second.
 		constexpr float rotationSpeed = DirectX::XMConvertToRadians(45.0f);
 		const float angle = elapsedSeconds * rotationSpeed;
-		const XMMATRIX world = XMMatrixRotationX(angle);
-
-		const XMMATRIX view = camera.CalculateView();
-
-		// Build the perspective projection.
-		const XMMATRIX projection = XMMatrixPerspectiveFovLH(XMConvertToRadians(60.0f), m_aspectRatio, 0.1f, 100.0f);
-
-		// Combine the transformation matrices.
-		const XMMATRIX wvp = world * view * projection;
-
-		TransformConstants constants{};
-
-		XMStoreFloat4x4(&constants.worldViewProjection, XMMatrixTranspose(wvp));
-
-		// Upload the transformation to the GPU.
-		m_context->UpdateSubresource(m_transformBuffer.Get(), 0, nullptr, &constants, 0, 0);
-
+		
 
 		// Bind the render target.
 		ID3D11RenderTargetView* renderTargets[] = { m_renderTarget.Get() };
@@ -108,12 +92,13 @@ namespace RenderEngine
 
 		m_context->PSSetShader(m_pixelShader.Get(), nullptr, 0);
 
-		ID3D11Buffer* constantBuffer = m_transformBuffer.Get();
+		const XMMATRIX view = camera.CalculateView();
+		const XMMATRIX projection = XMMatrixPerspectiveFovLH(XMConvertToRadians(60.0f), m_aspectRatio, 0.1f, 100.0f);
+		const XMMATRIX viewprojection = view * projection;
 
-		m_context->VSSetConstantBuffers(0, 1, &constantBuffer);
-
-		// Draw the triangle.
-		m_context->DrawIndexed(36, 0, 0);
+		RenderCube({ -3, 0, 0 }, 0, 0, 0.75f, viewprojection);
+		RenderCube({ 0, 0, 0 }, 0, angle, 1.0f, viewprojection);
+		RenderCube({ 3, 0, 0 }, angle, 0, 0.75f, viewprojection);
 
 		// Present the frame.
 		HRESULT result = m_swapChain->Present(1, 0);
@@ -377,6 +362,30 @@ namespace RenderEngine
 
 		result = m_device->CreateBuffer(&constantBufferDesc, nullptr, m_transformBuffer.GetAddressOf());
 		CheckHR(result, "Create transform buffer failed");
+	}
+
+	void Renderer::RenderCube(const DirectX::XMFLOAT3& position, const float rotationX, const float rotationY, const float scale, const DirectX::XMMATRIX& viewprojection)
+	{
+		using namespace DirectX;
+
+		const XMMATRIX world = XMMatrixScaling(scale, scale, scale) * XMMatrixRotationX(rotationX) * XMMatrixRotationY(rotationY) * XMMatrixTranslation(position.x, position.y, position.z);
+
+		// Combine the transformation matrices.
+		const XMMATRIX wvp = world * viewprojection;
+
+		TransformConstants constants{};
+
+		XMStoreFloat4x4(&constants.worldViewProjection, XMMatrixTranspose(wvp));
+
+		// Upload the transformation to the GPU.
+		m_context->UpdateSubresource(m_transformBuffer.Get(), 0, nullptr, &constants, 0, 0);
+
+		ID3D11Buffer* constantBuffer = m_transformBuffer.Get();
+
+		m_context->VSSetConstantBuffers(0, 1, &constantBuffer);
+
+		// Draw the triangle.
+		m_context->DrawIndexed(36, 0, 0);
 	}
 
 	void Renderer::CheckHR(HRESULT result, const char* message)

@@ -139,11 +139,14 @@
     </Manifest>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="src\Input\Input.ixx" />
     <ClCompile Include="src\RenderEngine.ixx" />
     <ClCompile Include="src\Rendering\Camera.cpp" />
     <ClCompile Include="src\Rendering\Camera.ixx" />
     <ClCompile Include="src\Rendering\Engine.cpp" />
     <ClCompile Include="src\Rendering\Engine.ixx" />
+    <ClCompile Include="src\Input\InputHandler.cpp" />
+    <ClCompile Include="src\Input\InputHandler.ixx" />
     <ClCompile Include="src\Rendering\Renderer.ixx">
       <FileType>Document</FileType>
     </ClCompile>

@@ -9,6 +9,9 @@
     <ClCompile Include="src\Rendering\Rendering.ixx" />
     <ClCompile Include="src\Rendering\Camera.ixx" />
     <ClCompile Include="src\Rendering\Camera.cpp" />
+    <ClCompile Include="src\Input\InputHandler.ixx" />
+    <ClCompile Include="src\Input\InputHandler.cpp" />
+    <ClCompile Include="src\Input\Input.ixx" />
   </ItemGroup>
   <ItemGroup>
     <None Include="src\Shaders\Triangle.hlsl" />

@@ -1,5 +1,6 @@
 module;
 
+#include <DirectXMath.h>
 #include <Windows.h>
 #include <d3d11.h>
 #include <dxgi1_2.h>
@@ -26,6 +27,7 @@ export namespace RenderEngine
         void CreateRenderTarget(UINT width, UINT height);
         void CreateDepthBuffer(UINT width, UINT height);
         void CreateCubeResources();
+        void RenderCube(const DirectX::XMFLOAT3& position, float rotationX, float rotationY, const float scale, const DirectX::XMMATRIX& viewprojection);
 
         static void CheckHR(HRESULT result, const char* message);
 
