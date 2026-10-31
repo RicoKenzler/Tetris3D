@@ -2,7 +2,6 @@ module;
 
 #include <DirectXMath.h>
 #include <Windows.h>
-#include <chrono>
 #include <stdexcept>
 #include <string>
 #include <algorithm>
@@ -10,6 +9,7 @@ module;
 module RenderEngine.Rendering;
 
 import :Engine;
+import :Time;
 import RenderEngine.Input;
 
 namespace RenderEngine
@@ -30,14 +30,10 @@ namespace RenderEngine
 	
 	int Engine::Run()
 	{
-		using Clock = std::chrono::steady_clock;
-
-		const auto startTime = Clock::now();
+		m_time.Init();
 
 		MSG msg{};
 		bool running = true;
-
-		float lastFrameTime = 0;
 
 		while (running)
 		{
@@ -56,19 +52,9 @@ namespace RenderEngine
 			if (!running)
 				break;
 
-			// Calculate the elapsed time since the engine started.
-			const auto now = Clock::now();
-
-			const std::chrono::duration<float> elapsed = now - startTime;
-
-			const float elapsedSeconds = elapsed.count();
-
-			const float deltaTime = elapsedSeconds - lastFrameTime;
-			ProcessInput(deltaTime);
-			lastFrameTime = elapsedSeconds;
-
-			// Render the scene at the current time.
-			m_renderer.Render(elapsedSeconds, m_camera);
+			m_time.Update();
+			ProcessInput(m_time.GetDeltaTime());
+			m_renderer.Render(m_time.GetElapsedSeconds(), m_camera);
 		}
 
 		return static_cast<int>(msg.wParam);

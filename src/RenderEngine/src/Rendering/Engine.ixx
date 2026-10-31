@@ -6,6 +6,7 @@ export module RenderEngine.Rendering:Engine;
 
 import :Renderer;
 import :Camera;
+import :Time;
 import RenderEngine.Input;
 
 export namespace RenderEngine
@@ -28,6 +29,8 @@ export namespace RenderEngine
 		
 		bool m_wasRightMousePressedLastFrame = false;
 		bool m_isMouseCaptured = false;
+
+		Time m_time;
 		InputHandler m_inputHandler;
 		Renderer m_renderer;
 		Camera m_camera;

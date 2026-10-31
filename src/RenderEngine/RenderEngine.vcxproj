@@ -46,7 +46,7 @@
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
-    <ConfigurationType>Application</ConfigurationType>
+    <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <PlatformToolset>v145</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
@@ -147,10 +147,19 @@
     <ClCompile Include="src\Rendering\Engine.ixx" />
     <ClCompile Include="src\Input\InputHandler.cpp" />
     <ClCompile Include="src\Input\InputHandler.ixx" />
+    <ClCompile Include="src\Rendering\Mesh.cpp" />
+    <ClCompile Include="src\Rendering\Mesh.ixx" />
+    <ClCompile Include="src\Rendering\Renderable.cpp" />
+    <ClCompile Include="src\Rendering\Renderable.ixx" />
     <ClCompile Include="src\Rendering\Renderer.ixx">
       <FileType>Document</FileType>
     </ClCompile>
     <ClCompile Include="src\Rendering\Rendering.ixx" />
+    <ClCompile Include="src\Rendering\Time.cpp" />
+    <ClCompile Include="src\Rendering\Time.ixx" />
+    <ClCompile Include="src\Rendering\Transform.cpp" />
+    <ClCompile Include="src\Rendering\Transform.ixx" />
+    <ClCompile Include="src\Rendering\Vertex.ixx" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\Rendering\Renderer.cpp" />

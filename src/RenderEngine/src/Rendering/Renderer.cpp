@@ -8,6 +8,8 @@ module;
 #include <dxgi1_2.h>
 #include <stdexcept>
 #include <string>
+#include <cstddef>
+#include <vector>
 #include <wrl/client.h>
 
 #pragma comment(lib, "d3d11.lib")
@@ -18,20 +20,25 @@ module RenderEngine.Rendering;
 
 import :Renderer;
 import :Camera;
+import :Mesh;
+import :Vertex;
 
 using Microsoft::WRL::ComPtr;
 
 namespace RenderEngine
 {
-	struct Vertex
+	struct Pixel
 	{
-		float x, y, z;
-		float r, g, b;
+		std::uint8_t r;
+		std::uint8_t g;
+		std::uint8_t b;
+		std::uint8_t a;
 	};
 
 	struct TransformConstants
 	{
 		DirectX::XMFLOAT4X4 worldViewProjection;
+		DirectX::XMFLOAT4X4 normalMatrix;
 	};
 
 	static_assert(sizeof(TransformConstants) % 16 == 0);
@@ -45,6 +52,7 @@ namespace RenderEngine
 		CreateSwapChain(hwnd, width, height);
 		CreateRenderTarget(width, height);
 		CreateDepthBuffer(width, height);
+		CreateSampler();
 		CreateCubeResources();
 	}
 
@@ -73,19 +81,6 @@ namespace RenderEngine
 
 		m_context->ClearDepthStencilView(m_depthStencilView.Get(), D3D11_CLEAR_DEPTH, 1.0f, 0);
 
-		// Configure the input assembler.
-		constexpr UINT stride = sizeof(Vertex);
-		constexpr UINT offset = 0;
-
-		ID3D11Buffer* vertexBuffer = m_vertexBuffer.Get();
-
-		m_context->IASetVertexBuffers(0, 1, &vertexBuffer, &stride, &offset);
-
-		m_context->IASetIndexBuffer(m_indexBuffer.Get(), DXGI_FORMAT_R16_UINT, 0);
-
-		m_context->IASetInputLayout(m_inputLayout.Get());
-
-		m_context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
 		// Bind the shaders.
 		m_context->VSSetShader(m_vertexShader.Get(), nullptr, 0);
@@ -96,9 +91,14 @@ namespace RenderEngine
 		const XMMATRIX projection = XMMatrixPerspectiveFovLH(XMConvertToRadians(60.0f), m_aspectRatio, 0.1f, 100.0f);
 		const XMMATRIX viewprojection = view * projection;
 
-		RenderCube({ -3, 0, 0 }, 0, 0, 0.75f, viewprojection);
-		RenderCube({ 0, 0, 0 }, 0, angle, 1.0f, viewprojection);
-		RenderCube({ 3, 0, 0 }, angle, 0, 0.75f, viewprojection);
+		m_cube2.GetTransform().SetRotation({ angle, 0, 0 });
+		m_cube3.GetTransform().SetRotation({ 0, 0, angle });
+		m_pyramid.GetTransform().SetRotation({ 0, angle, 0});
+
+		RenderObject(m_cube1, viewprojection);
+		RenderObject(m_cube2, viewprojection);
+		RenderObject(m_cube3, viewprojection);
+		RenderObject(m_pyramid, viewprojection);
 
 		// Present the frame.
 		HRESULT result = m_swapChain->Present(1, 0);
@@ -213,88 +213,76 @@ namespace RenderEngine
 		CheckHR(result, "Create depth stencil view failed");
 	}
 
+	void Renderer::CreateSampler()
+	{
+		D3D11_SAMPLER_DESC samplerDesc{};
+
+		samplerDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+		samplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
+		samplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
+		samplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
+		samplerDesc.MaxLOD = D3D11_FLOAT32_MAX;
+
+		HRESULT result = m_device->CreateSamplerState(
+			&samplerDesc,
+			m_samplerState.GetAddressOf());
+	}
+
 	void Renderer::CreateCubeResources()
 	{
-		// Eight corners of a cube centered at the origin.
-		constexpr Vertex vertices[] =
+		//Create a texture
+		D3D11_TEXTURE2D_DESC desc{};
+		desc.Width = 64;
+		desc.Height = 64;
+		desc.MipLevels = 1;
+		desc.ArraySize = 1;
+		desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+		desc.SampleDesc.Count = 1;
+		desc.Usage = D3D11_USAGE_IMMUTABLE;
+		desc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+
+		std::vector<Pixel> pixels;
+		pixels.reserve(64 * 64);
+		for (int i = 0; i < 64 * 64; ++i)
 		{
-			{ -1.0f, -1.0f, -1.0f, 1.0f, 0.0f, 0.0f }, // 0
-			{ -1.0f,  1.0f, -1.0f, 0.0f, 1.0f, 0.0f }, // 1
-			{ 1.0f,  1.0f, -1.0f, 0.0f, 0.0f, 1.0f }, // 2
-			{ 1.0f, -1.0f, -1.0f, 1.0f, 1.0f, 0.0f }, // 3
-
-			{ -1.0f, -1.0f,  1.0f, 0.0f, 1.0f, 1.0f }, // 4
-			{ -1.0f,  1.0f,  1.0f, 1.0f, 0.0f, 1.0f }, // 5
-			{ 1.0f,  1.0f,  1.0f, 1.0f, 1.0f, 1.0f }, // 6
-			{ 1.0f, -1.0f,  1.0f, 1.0f, 0.5f, 0.0f }  // 7
-		};
-
-		// Each group of three indices defines one triangle.
-		// The winding order matches the default D3D11 rasterizer.
-		constexpr std::uint16_t indices[] =
-		{
-			// Front (-Z)
-			0, 1, 2,
-			0, 2, 3,
-
-			// Back (+Z)
-			4, 6, 5,
-			4, 7, 6,
-
-			// Left (-X)
-			0, 4, 5,
-			0, 5, 1,
-
-			// Right (+X)
-			3, 2, 6,
-			3, 6, 7,
-
-			// Top (+Y)
-			1, 5, 6,
-			1, 6, 2,
-
-			// Bottom (-Y)
-			0, 3, 7,
-			0, 7, 4
-		};
-
-
-		// Create the vertex buffer.
-		D3D11_BUFFER_DESC bufferDesc{};
-		bufferDesc.ByteWidth = static_cast<UINT>(sizeof(vertices));
-		bufferDesc.Usage = D3D11_USAGE_IMMUTABLE;
-		bufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+			int x = i % 64;
+			int y = i / 64;
+			int z = (x / 8 + y / 8) % 2;
+			if (z == 0)
+			{
+				pixels.emplace_back(0, 0, 0, 255);
+			}
+			else
+			{
+				pixels.emplace_back(255, 255, 255, 255);
+			}
+		}
 
 		D3D11_SUBRESOURCE_DATA initialData{};
-		initialData.pSysMem = vertices;
+		initialData.pSysMem = pixels.data();
+		initialData.SysMemPitch = 64 * sizeof(Pixel);
 
-		HRESULT result = m_device->CreateBuffer(
-			&bufferDesc,
-			&initialData,
-			m_vertexBuffer.GetAddressOf()
-		);
-		CheckHR(result, "CreateBuffer failed");
+		HRESULT result = m_device->CreateTexture2D(&desc, &initialData, m_checkerTexture.GetAddressOf());
+		CheckHR(result, "CreateTexture failed");
 
+		result = m_device->CreateShaderResourceView(m_checkerTexture.Get(), nullptr, m_checkerTextureResourceView.GetAddressOf());
+		CheckHR(result, "CreateShaderResourceView failed");
 
-		// Describe the index buffer.
-		D3D11_BUFFER_DESC indexDesc{};
-		indexDesc.ByteWidth = static_cast<UINT>(sizeof(indices));
-		indexDesc.Usage = D3D11_USAGE_IMMUTABLE;
-		indexDesc.BindFlags = D3D11_BIND_INDEX_BUFFER;
+		m_cubeMesh.InitCube(*m_device.Get());
+		m_pyramidMesh.InitPyramid(*m_device.Get());
 
-		// Provide the initial index data.
-		D3D11_SUBRESOURCE_DATA indexData{};
-		indexData.pSysMem = indices;
+		m_cube1.Init(&m_cubeMesh);
+		m_cube2.Init(&m_cubeMesh);
+		m_cube3.Init(&m_cubeMesh);
 
-		// Create the GPU index buffer.
-		result = m_device->CreateBuffer(
-			&indexDesc,
-			&indexData,
-			m_indexBuffer.GetAddressOf()
-		);
-		CheckHR(result, "Create index buffer failed");
+		m_cube1.GetTransform().SetPosition({ -3, 0, 0 });
+		m_cube1.GetTransform().SetScale({ 0.75f, 0.75f, 0.75f });
 
+		m_cube3.GetTransform().SetPosition({ 3, 0, 0 });
+		m_cube3.GetTransform().SetScale({ 0.75f, 0.75f, 0.75f });
 
+		m_pyramid.Init(&m_pyramidMesh);
+		m_pyramid.GetTransform().SetPosition({ 6, 0, 0 });
 
 
 		// 3. Compile the HLSL shaders.
@@ -329,7 +317,7 @@ namespace RenderEngine
 				0,
 				DXGI_FORMAT_R32G32B32_FLOAT,
 				0,
-				0,
+				offsetof(Vertex, x),
 				D3D11_INPUT_PER_VERTEX_DATA,
 				0
 			},
@@ -338,19 +326,36 @@ namespace RenderEngine
 				0,
 				DXGI_FORMAT_R32G32B32_FLOAT,
 				0,
-				12,
+				offsetof(Vertex, r),
 				D3D11_INPUT_PER_VERTEX_DATA,
 				0
+			},
+			{
+				"NORMAL",
+				0,
+				DXGI_FORMAT_R32G32B32_FLOAT,
+				0,
+				offsetof(Vertex, nx),
+				D3D11_INPUT_PER_VERTEX_DATA
+			},
+			{
+				"TEXCOORD",
+				0,
+				DXGI_FORMAT_R32G32_FLOAT,
+				0,
+				offsetof(Vertex, u),
+				D3D11_INPUT_PER_VERTEX_DATA
 			}
 		};
 
 		result = m_device->CreateInputLayout(
 			inputElements,
-			2,
+			sizeof(inputElements) / sizeof(D3D11_INPUT_ELEMENT_DESC),
 			vertexBytecode->GetBufferPointer(),
 			vertexBytecode->GetBufferSize(),
 			m_inputLayout.GetAddressOf()
 		);
+		DWORD error = GetLastError();
 		CheckHR(result, "CreateInputLayout failed");
 
 
@@ -364,18 +369,37 @@ namespace RenderEngine
 		CheckHR(result, "Create transform buffer failed");
 	}
 
-	void Renderer::RenderCube(const DirectX::XMFLOAT3& position, const float rotationX, const float rotationY, const float scale, const DirectX::XMMATRIX& viewprojection)
+	void Renderer::RenderObject(const Renderable& renderable, const DirectX::XMMATRIX& viewprojection)
 	{
 		using namespace DirectX;
 
-		const XMMATRIX world = XMMatrixScaling(scale, scale, scale) * XMMatrixRotationX(rotationX) * XMMatrixRotationY(rotationY) * XMMatrixTranslation(position.x, position.y, position.z);
+		// Configure the input assembler.
+		constexpr UINT stride = sizeof(Vertex);
+		constexpr UINT offset = 0;
+
+		ID3D11Buffer* vertexBuffer = renderable.GetMesh()->GetVertexBuffer();
+
+		m_context->IASetVertexBuffers(0, 1, &vertexBuffer, &stride, &offset);
+
+		m_context->IASetIndexBuffer(renderable.GetMesh()->GetIndexBuffer(), DXGI_FORMAT_R16_UINT, 0);
+
+		m_context->IASetInputLayout(m_inputLayout.Get());
+
+		m_context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+		m_context->PSSetShaderResources(0, 1, m_checkerTextureResourceView.GetAddressOf());
+		m_context->PSSetSamplers(0, 1, m_samplerState.GetAddressOf());
+
+		const XMMATRIX world = renderable.GetTransform().CalculateWorldMatrix();
 
 		// Combine the transformation matrices.
 		const XMMATRIX wvp = world * viewprojection;
+		const XMMATRIX normalMatrix = DirectX::XMMatrixInverse(nullptr, world);
 
 		TransformConstants constants{};
 
 		XMStoreFloat4x4(&constants.worldViewProjection, XMMatrixTranspose(wvp));
+		XMStoreFloat4x4(&constants.normalMatrix, normalMatrix);
 
 		// Upload the transformation to the GPU.
 		m_context->UpdateSubresource(m_transformBuffer.Get(), 0, nullptr, &constants, 0, 0);
@@ -385,13 +409,7 @@ namespace RenderEngine
 		m_context->VSSetConstantBuffers(0, 1, &constantBuffer);
 
 		// Draw the triangle.
-		m_context->DrawIndexed(36, 0, 0);
-	}
-
-	void Renderer::CheckHR(HRESULT result, const char* message)
-	{
-		if (FAILED(result))
-			throw std::runtime_error(message);
+		m_context->DrawIndexed(renderable.GetMesh()->GetIndexCount(), 0, 0);
 	}
 
 	ComPtr<ID3DBlob> Renderer::CompileShader(const wchar_t* shaderPath, const char* entry, const char* target) const
@@ -441,5 +459,11 @@ namespace RenderEngine
 		}
 
 		return bytecode;
+	}
+
+	void Renderer::CheckHR(HRESULT result, const char* message)
+	{
+		if (FAILED(result))
+			throw std::runtime_error(message);
 	}
 }
