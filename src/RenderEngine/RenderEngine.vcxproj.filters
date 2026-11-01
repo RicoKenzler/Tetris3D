@@ -21,9 +21,13 @@
     <ClCompile Include="src\Rendering\Vertex.ixx" />
     <ClCompile Include="src\Rendering\Renderable.ixx" />
     <ClCompile Include="src\Rendering\Renderable.cpp" />
+    <ClCompile Include="src\Rendering\Texture.ixx" />
+    <ClCompile Include="src\Rendering\Texture.cpp" />
+    <ClCompile Include="src\Rendering\Pixel.ixx" />
   </ItemGroup>
   <ItemGroup>
     <None Include="src\Shaders\Triangle.hlsl" />
     <None Include="src\Shaders\Cube.hlsl" />
+    <None Include="packages.config" />
   </ItemGroup>
 </Project>

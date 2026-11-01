@@ -21,6 +21,7 @@ export namespace RenderEngine
 
 	private:
 		static LRESULT CALLBACK WindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
+		static void CheckHR(HRESULT result, const char* message);
 
 		void InitWindow(HINSTANCE instance);
 		void ProcessInput(float deltaTime);

@@ -1,3 +1,5 @@
+module;
+
 export module RenderEngine.Rendering;
 
 export import :Engine;
@@ -7,3 +9,5 @@ import :Vertex;
 import :Mesh;
 import :Transform;
 import :Renderable;
+import :Texture;
+import :Pixel;

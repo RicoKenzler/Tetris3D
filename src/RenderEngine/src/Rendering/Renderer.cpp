@@ -9,7 +9,6 @@ module;
 #include <stdexcept>
 #include <string>
 #include <cstddef>
-#include <vector>
 #include <wrl/client.h>
 
 #pragma comment(lib, "d3d11.lib")
@@ -27,14 +26,6 @@ using Microsoft::WRL::ComPtr;
 
 namespace RenderEngine
 {
-	struct Pixel
-	{
-		std::uint8_t r;
-		std::uint8_t g;
-		std::uint8_t b;
-		std::uint8_t a;
-	};
-
 	struct TransformConstants
 	{
 		DirectX::XMFLOAT4X4 worldViewProjection;
@@ -70,7 +61,7 @@ namespace RenderEngine
 		ID3D11RenderTargetView* renderTargets[] = { m_renderTarget.Get() };
 
 		m_context->OMSetRenderTargets(1, renderTargets, m_depthStencilView.Get());
-
+		
 		// Clear the back buffer.
 		constexpr float clearColor[4] =
 		{
@@ -217,7 +208,8 @@ namespace RenderEngine
 	{
 		D3D11_SAMPLER_DESC samplerDesc{};
 
-		samplerDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+		samplerDesc.Filter = D3D11_FILTER_ANISOTROPIC;
+		samplerDesc.MaxAnisotropy = 8;
 		samplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
 		samplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
 		samplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
@@ -230,50 +222,15 @@ namespace RenderEngine
 
 	void Renderer::CreateCubeResources()
 	{
-		//Create a texture
-		D3D11_TEXTURE2D_DESC desc{};
-		desc.Width = 64;
-		desc.Height = 64;
-		desc.MipLevels = 1;
-		desc.ArraySize = 1;
-		desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-		desc.SampleDesc.Count = 1;
-		desc.Usage = D3D11_USAGE_IMMUTABLE;
-		desc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
-
-		std::vector<Pixel> pixels;
-		pixels.reserve(64 * 64);
-		for (int i = 0; i < 64 * 64; ++i)
-		{
-			int x = i % 64;
-			int y = i / 64;
-			int z = (x / 8 + y / 8) % 2;
-			if (z == 0)
-			{
-				pixels.emplace_back(0, 0, 0, 255);
-			}
-			else
-			{
-				pixels.emplace_back(255, 255, 255, 255);
-			}
-		}
-
-		D3D11_SUBRESOURCE_DATA initialData{};
-		initialData.pSysMem = pixels.data();
-		initialData.SysMemPitch = 64 * sizeof(Pixel);
-
-		HRESULT result = m_device->CreateTexture2D(&desc, &initialData, m_checkerTexture.GetAddressOf());
-		CheckHR(result, "CreateTexture failed");
-
-		result = m_device->CreateShaderResourceView(m_checkerTexture.Get(), nullptr, m_checkerTextureResourceView.GetAddressOf());
-		CheckHR(result, "CreateShaderResourceView failed");
+		m_woodTexture.LoadFromFile(*m_device.Get(), *m_context.Get(), L"assets/wood.png");
+		m_checkerTexture.CreateCheckerTexture(*m_device.Get(), *m_context.Get());
 
 		m_cubeMesh.InitCube(*m_device.Get());
 		m_pyramidMesh.InitPyramid(*m_device.Get());
 
-		m_cube1.Init(&m_cubeMesh);
-		m_cube2.Init(&m_cubeMesh);
-		m_cube3.Init(&m_cubeMesh);
+		m_cube1.Init(&m_cubeMesh, &m_woodTexture);
+		m_cube2.Init(&m_cubeMesh, &m_woodTexture);
+		m_cube3.Init(&m_cubeMesh, &m_checkerTexture);
 
 		m_cube1.GetTransform().SetPosition({ -3, 0, 0 });
 		m_cube1.GetTransform().SetScale({ 0.75f, 0.75f, 0.75f });
@@ -281,7 +238,7 @@ namespace RenderEngine
 		m_cube3.GetTransform().SetPosition({ 3, 0, 0 });
 		m_cube3.GetTransform().SetScale({ 0.75f, 0.75f, 0.75f });
 
-		m_pyramid.Init(&m_pyramidMesh);
+		m_pyramid.Init(&m_pyramidMesh, &m_woodTexture);
 		m_pyramid.GetTransform().SetPosition({ 6, 0, 0 });
 
 
@@ -292,7 +249,7 @@ namespace RenderEngine
 
 
 		// 4. Create the Direct3D shader objects.
-		result = m_device->CreateVertexShader(
+		HRESULT result = m_device->CreateVertexShader(
 			vertexBytecode->GetBufferPointer(),
 			vertexBytecode->GetBufferSize(),
 			nullptr,
@@ -387,7 +344,8 @@ namespace RenderEngine
 
 		m_context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
-		m_context->PSSetShaderResources(0, 1, m_checkerTextureResourceView.GetAddressOf());
+		ID3D11ShaderResourceView* textureView = renderable.GetTexture()->GetTextureResourceView();
+		m_context->PSSetShaderResources(0, 1, &textureView);
 		m_context->PSSetSamplers(0, 1, m_samplerState.GetAddressOf());
 
 		const XMMATRIX world = renderable.GetTransform().CalculateWorldMatrix();

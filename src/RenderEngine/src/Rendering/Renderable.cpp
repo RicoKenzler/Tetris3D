@@ -9,8 +9,9 @@ import :Mesh;
 
 namespace RenderEngine
 {
-	void Renderable::Init(Mesh* mesh)
+	void Renderable::Init(Mesh* const mesh, Texture* const texture)
 	{
 		m_mesh = mesh;
+		m_texture = texture;
 	}
 }

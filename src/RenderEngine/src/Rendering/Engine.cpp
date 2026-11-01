@@ -21,6 +21,9 @@ namespace RenderEngine
 	{
 		InitWindow(instance);
 
+		HRESULT result = CoInitializeEx(nullptr, COINIT_MULTITHREADED);
+		CheckHR(result, "CoInitializeEx failed");
+
 		m_renderer.Initialize(m_hwnd, WindowWidth, WindowHeight);
 
 		ShowWindow(m_hwnd, showCommand);
@@ -84,11 +87,18 @@ namespace RenderEngine
 				engine->ReleaseMouse();
 			}
 
+			CoUninitialize();
 			PostQuitMessage(0);
 			return 0;
 		}
 
 		return DefWindowProcW(hwnd, message, wParam, lParam);
+	}
+
+	void Engine::CheckHR(HRESULT result, const char* message)
+	{
+		if (FAILED(result))
+			throw std::runtime_error(message);
 	}
 
 	void Engine::InitWindow(HINSTANCE instance)
@@ -233,17 +243,17 @@ namespace RenderEngine
 
 	void Engine::CaptureMouse()
 	{
-		RECT rect;
+		RECT rect{};
 		if (!GetClientRect(m_hwnd, &rect))
 			return;
 
-		POINT br;
+		POINT br{};
 		br.x = rect.right;
 		br.y = rect.bottom;
 		if (!ClientToScreen(m_hwnd, &br))
 			return;
 
-		POINT tl;
+		POINT tl{};
 		tl.x = rect.left;
 		tl.y = rect.top;
 		if (!ClientToScreen(m_hwnd, &tl))

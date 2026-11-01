@@ -50,8 +50,8 @@ export namespace RenderEngine
         ComPtr<ID3D11Buffer> m_transformBuffer;
         ComPtr<ID3D11SamplerState> m_samplerState;
 
-        ComPtr<ID3D11Texture2D> m_checkerTexture;
-        ComPtr<ID3D11ShaderResourceView> m_checkerTextureResourceView;
+        Texture m_checkerTexture;
+        Texture m_woodTexture;
 
         Mesh m_cubeMesh;
         Mesh m_pyramidMesh;
