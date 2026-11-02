@@ -4,7 +4,7 @@ export module Engine.Rendering;
 
 export import :Engine;
 export import :Renderer;
-import :Time;
+export import :Time;
 import :Vertex;
 import :Mesh;
 import :Transform;

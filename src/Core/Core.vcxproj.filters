@@ -21,5 +21,11 @@
     <ClCompile Include="src\IGame.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\Vector3.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\TransformData.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

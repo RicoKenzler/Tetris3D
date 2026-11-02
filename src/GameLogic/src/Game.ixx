@@ -1,8 +1,14 @@
+module;
+
+#include <vector>
+#include <memory>
+
 export module GameLogic:Game;
 
 import Core;
 import Engine;
 import :CameraControl;
+import :GameObject;
 
 export namespace game
 {
@@ -11,6 +17,7 @@ export namespace game
 	public:
 		Game() = default;
 		void Initialize(engine::Engine* engine);
+		void Shutdown() override;
 		void Update(float deltaTime) override;
 		void Render() override;
 
@@ -19,7 +26,6 @@ export namespace game
 	private:
 		static engine::Engine* m_engine;
 		CameraControl m_cameraControl;
-
+		std::vector<std::unique_ptr<GameObject>> m_gameObjects;
 	};
-	
 }

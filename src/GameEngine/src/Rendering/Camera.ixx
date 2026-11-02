@@ -28,7 +28,7 @@ export namespace engine
 
 
 	private:
-		DirectX::XMFLOAT3 m_position = { 0.0f, 0.0f, -5.0f };
+		DirectX::XMFLOAT3 m_position = { 0.0f, 0.0f, -8.0f };
 		DirectX::XMFLOAT3 m_up = { 0.0f, 1.0f, 0.0f };
 		DirectX::XMFLOAT3 m_forward = { 0.0f, 0.0f, 1.0f };
 		float m_yaw = 0.0f;

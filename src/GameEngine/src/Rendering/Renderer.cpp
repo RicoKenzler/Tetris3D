@@ -2,8 +2,8 @@ module;
 
 #include <DirectXMath.h>
 #include <Windows.h>
-#include <cstdint>
 #include <d3d11.h>
+#include <algorithm>
 #include <d3dcompiler.h>
 #include <dxgi1_2.h>
 #include <stdexcept>
@@ -51,11 +51,6 @@ namespace engine
 	{
 		using namespace DirectX;
 
-		// Build the world matrix.
-		// Rotate the cube at 45 degrees per second.
-		constexpr float rotationSpeed = DirectX::XMConvertToRadians(45.0f);
-		const float angle = elapsedSeconds * rotationSpeed;
-		
 
 		// Bind the render target.
 		ID3D11RenderTargetView* renderTargets[] = { m_renderTarget.Get() };
@@ -69,36 +64,61 @@ namespace engine
 		};
 
 		m_context->ClearRenderTargetView(m_renderTarget.Get(), clearColor);
-
 		m_context->ClearDepthStencilView(m_depthStencilView.Get(), D3D11_CLEAR_DEPTH, 1.0f, 0);
 
 
 		// Bind the shaders.
 		m_context->VSSetShader(m_vertexShader.Get(), nullptr, 0);
-
 		m_context->PSSetShader(m_pixelShader.Get(), nullptr, 0);
 
 		const XMMATRIX view = camera.CalculateView();
 		const XMMATRIX projection = XMMatrixPerspectiveFovLH(XMConvertToRadians(60.0f), m_aspectRatio, 0.1f, 100.0f);
 		const XMMATRIX viewprojection = view * projection;
 
-		m_cube2.GetTransform().SetRotation({ angle, 0, 0 });
-		m_cube3.GetTransform().SetRotation({ 0, 0, angle });
-		m_pyramid.GetTransform().SetRotation({ 0, angle, 0});
-
-		RenderObject(m_cube1, viewprojection);
-		RenderObject(m_cube2, viewprojection);
-		RenderObject(m_cube3, viewprojection);
-		RenderObject(m_pyramid, viewprojection);
+		for (const auto& renderable : m_renderables)
+		{
+			RenderObject(*renderable, viewprojection);
+		}
 
 		// Present the frame.
 		HRESULT result = m_swapChain->Present(1, 0);
 		CheckHR(result, "Present failed");
 	}
 
-	void Renderer::ShutDown()
+	void Renderer::Shutdown()
 	{
 		m_context->ClearState();
+
+		m_renderables.clear();
+	}
+
+	int Renderer::CreateObject(const bool cube)
+	{
+		const int newId = ++m_idCounter;
+
+		Renderable* newRenderable = new Renderable();
+		newRenderable->Init(newId, cube ? &m_cubeMesh : &m_pyramidMesh, cube ? &m_woodTexture : &m_checkerTexture);
+		m_renderables.emplace_back(newRenderable);
+
+		return newId;
+	}
+
+	void Renderer::DestroyObject(const int id)
+	{
+		auto it = std::ranges::find_if(m_renderables, [id](const std::unique_ptr<Renderable>& renderable) { return renderable->GetId() == id; });
+		if (it != m_renderables.end())
+		{
+			m_renderables.erase(it);
+		}
+	}
+
+	void Renderer::SetTransformData(const int id, const core::TransformData& transformData)
+	{
+		auto it = std::ranges::find_if(m_renderables, [id](const std::unique_ptr<Renderable>& renderable) { return renderable->GetId() == id; });
+		if (it != m_renderables.end())
+		{
+			(*it)->SetTransformData(transformData);
+		}
 	}
 
 	void Renderer::CreateDevice()
@@ -227,20 +247,6 @@ namespace engine
 
 		m_cubeMesh.InitCube(*m_device.Get());
 		m_pyramidMesh.InitPyramid(*m_device.Get());
-
-		m_cube1.Init(&m_cubeMesh, &m_woodTexture);
-		m_cube2.Init(&m_cubeMesh, &m_woodTexture);
-		m_cube3.Init(&m_cubeMesh, &m_checkerTexture);
-
-		m_cube1.GetTransform().SetPosition({ -3, 0, 0 });
-		m_cube1.GetTransform().SetScale({ 0.75f, 0.75f, 0.75f });
-
-		m_cube3.GetTransform().SetPosition({ 3, 0, 0 });
-		m_cube3.GetTransform().SetScale({ 0.75f, 0.75f, 0.75f });
-
-		m_pyramid.Init(&m_pyramidMesh, &m_woodTexture);
-		m_pyramid.GetTransform().SetPosition({ 6, 0, 0 });
-
 
 		// 3. Compile the HLSL shaders.
 		const wchar_t* shaderPath = L"src\\GameEngine\\src\\Shaders\\Cube.hlsl";

@@ -62,6 +62,13 @@ namespace engine
 		return static_cast<int>(msg.wParam);
 	}
 
+	void Engine::Shutdown()
+	{
+		m_game->Shutdown();
+		m_game = nullptr;
+		m_renderer.Shutdown();
+	}
+
 	bool Engine::HasFocus() const
 	{
 		const bool hasFocus = GetForegroundWindow() == m_hwnd;
@@ -89,7 +96,7 @@ namespace engine
 			if (enginePtr != 0)
 			{
 				Engine* const engine = reinterpret_cast<Engine*>(enginePtr);
-				engine->m_inputHandler.ReleaseMouse();
+				engine->Shutdown();
 			}
 
 			CoUninitialize();

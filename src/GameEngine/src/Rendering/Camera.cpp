@@ -1,7 +1,5 @@
 module;
 
-#include <Windows.h>
-
 #include <DirectXMath.h>
 
 module Engine.Rendering;

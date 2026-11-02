@@ -4,11 +4,11 @@ module;
 
 export module Engine.Rendering:Engine;
 
+export import :Renderer;
+export import :Camera;
+export import :Time;
+export import Engine.Input;
 import Core;
-import :Renderer;
-import :Camera;
-import :Time;
-import Engine.Input;
 
 export namespace engine
 {
@@ -19,6 +19,7 @@ export namespace engine
 
 		void Initialize(HINSTANCE instance, int showCommand, core::IGame* game);
 		int Run();
+		void Shutdown();
 
 		[[nodiscard]] bool HasFocus() const;
 
@@ -27,6 +28,11 @@ export namespace engine
 
 		const Camera& GetCamera() const { return m_camera; }
 		Camera& GetCamera() { return m_camera; }
+
+		const Renderer& GetRenderer() const { return m_renderer; }
+		Renderer& GetRenderer() { return m_renderer; }
+
+		const Time& GetTime() const { return m_time; }
 
 	private:
 		static LRESULT CALLBACK WindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);

@@ -3,13 +3,17 @@ module;
 #include <DirectXMath.h>
 #include <Windows.h>
 #include <d3d11.h>
+#include <memory>
 #include <dxgi1_2.h>
 #include <wrl/client.h>
+#include <vector>
 
 export module Engine.Rendering:Renderer;
 
 export import :Camera;
+import Core;
 import :Mesh;
+import :Texture;
 import :Renderable;
 
 using Microsoft::WRL::ComPtr;
@@ -21,7 +25,12 @@ export namespace engine
     public:
         void Initialize(HWND hwnd, UINT width, UINT height);
         void Render(float elapsedSeconds, const Camera& camera);
-		void ShutDown();
+		void Shutdown();
+
+        int CreateObject(bool cube);
+        void DestroyObject(int id);
+
+        void SetTransformData(int id, const core::TransformData& transformData);
 
     private:
         void CreateDevice();
@@ -56,11 +65,9 @@ export namespace engine
         Mesh m_cubeMesh;
         Mesh m_pyramidMesh;
 
-        Renderable m_cube1;
-        Renderable m_cube2;
-        Renderable m_cube3;
-        Renderable m_pyramid;
+		std::vector<std::unique_ptr<Renderable>> m_renderables;
 
+        int m_idCounter = 0;
         float m_aspectRatio = 1.0f;
     };
 }
