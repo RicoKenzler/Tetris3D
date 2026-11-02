@@ -1,6 +1,6 @@
 module;
 
-export module RenderEngine.Rendering;
+export module Engine.Rendering;
 
 export import :Engine;
 export import :Renderer;

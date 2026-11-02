@@ -4,11 +4,11 @@ module;
 
 #include <DirectXMath.h>
 
-module RenderEngine.Rendering;
+module Engine.Rendering;
 
 import :Camera;
 
-namespace RenderEngine
+namespace engine
 {
 	DirectX::XMMATRIX Camera::CalculateView() const
 	{

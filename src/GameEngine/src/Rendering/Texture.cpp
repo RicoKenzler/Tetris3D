@@ -8,11 +8,11 @@ module;
 #include <stdexcept>
 #include <wrl/client.h>
 
-module RenderEngine.Rendering;
+module Engine.Rendering;
 
 import :Texture;
 
-namespace RenderEngine
+namespace engine
 {
 	void Texture::CreateCheckerTexture(ID3D11Device& device, ID3D11DeviceContext& context)
 	{

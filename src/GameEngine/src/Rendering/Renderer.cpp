@@ -15,7 +15,7 @@ module;
 #pragma comment(lib, "dxgi.lib")
 #pragma comment(lib, "d3dcompiler.lib")
 
-module RenderEngine.Rendering;
+module Engine.Rendering;
 
 import :Renderer;
 import :Camera;
@@ -24,7 +24,7 @@ import :Vertex;
 
 using Microsoft::WRL::ComPtr;
 
-namespace RenderEngine
+namespace engine
 {
 	struct TransformConstants
 	{
@@ -243,7 +243,7 @@ namespace RenderEngine
 
 
 		// 3. Compile the HLSL shaders.
-		const wchar_t* shaderPath = L"src\\RenderEngine\\src\\Shaders\\Cube.hlsl";
+		const wchar_t* shaderPath = L"src\\GameEngine\\src\\Shaders\\Cube.hlsl";
 		ComPtr<ID3DBlob> vertexBytecode = CompileShader(shaderPath, "VSMain", "vs_5_0");
 		ComPtr<ID3DBlob> pixelBytecode = CompileShader(shaderPath, "PSMain", "ps_5_0");
 

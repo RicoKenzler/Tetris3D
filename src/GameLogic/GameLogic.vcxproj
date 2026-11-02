@@ -19,7 +19,19 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\CameraControl.cpp" />
+    <ClCompile Include="src\CameraControl.ixx" />
+    <ClCompile Include="src\Game.cpp" />
+    <ClCompile Include="src\Game.ixx" />
     <ClCompile Include="src\GameLogic.ixx" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Core\Core.vcxproj">
+      <Project>{5c772020-b215-4645-b266-54759251873c}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\GameEngine\GameEngine.vcxproj">
+      <Project>{c364e205-9ba2-4bc5-8685-8f647fad6c93}</Project>
+    </ProjectReference>
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>18.0</VCProjectVersion>

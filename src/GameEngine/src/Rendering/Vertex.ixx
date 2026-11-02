@@ -1,6 +1,6 @@
-export module RenderEngine.Rendering:Vertex;
+export module Engine.Rendering:Vertex;
 
-export namespace RenderEngine
+export namespace engine
 {
 	struct Vertex
 	{

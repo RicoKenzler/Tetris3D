@@ -18,5 +18,8 @@
     <ClCompile Include="src\Core.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\IGame.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

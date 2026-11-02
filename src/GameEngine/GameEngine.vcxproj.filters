@@ -3,7 +3,7 @@
   <ItemGroup>
     <ClCompile Include="src\Rendering\Renderer.cpp" />
     <ClCompile Include="src\Rendering\Renderer.ixx" />
-    <ClCompile Include="src\RenderEngine.ixx" />
+    <ClCompile Include="src\GameEngine.ixx" />
     <ClCompile Include="src\Rendering\Engine.ixx" />
     <ClCompile Include="src\Rendering\Engine.cpp" />
     <ClCompile Include="src\Rendering\Rendering.ixx" />

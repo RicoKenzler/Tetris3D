@@ -1,10 +1,10 @@
-export module RenderEngine.Rendering:Renderable;
+export module Engine.Rendering:Renderable;
 
 import :Mesh;
 import :Texture;
 import :Transform;
 
-export namespace RenderEngine
+export namespace engine
 {
 	class Renderable
 	{

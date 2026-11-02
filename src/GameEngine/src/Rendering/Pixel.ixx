@@ -2,9 +2,9 @@ module;
 
 #include <cstdint>
 
-export module RenderEngine.Rendering:Pixel;
+export module Engine.Rendering:Pixel;
 
-export namespace RenderEngine
+export namespace engine
 {
 	struct Pixel
 	{

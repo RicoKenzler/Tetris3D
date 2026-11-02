@@ -6,12 +6,12 @@ module;
 #include <dxgi1_2.h>
 #include <stdexcept>
 
-module RenderEngine.Rendering;
+module Engine.Rendering;
 
 import :Mesh;
 import :Vertex;
 
-namespace RenderEngine
+namespace engine
 {
 	void Mesh::InitPyramid(ID3D11Device& device)
 	{

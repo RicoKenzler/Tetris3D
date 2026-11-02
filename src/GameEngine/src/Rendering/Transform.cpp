@@ -2,11 +2,11 @@ module;
 
 #include <DirectXMath.h>
 
-module RenderEngine.Rendering;
+module Engine.Rendering;
 
 import :Transform;
 
-namespace RenderEngine
+namespace engine
 {
 	DirectX::XMMATRIX Transform::CalculateWorldMatrix() const
 	{

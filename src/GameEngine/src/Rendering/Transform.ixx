@@ -3,9 +3,9 @@ module;
 #include <DirectXMath.h>
 #include <d3d11.h>
 
-export module RenderEngine.Rendering:Transform;
+export module Engine.Rendering:Transform;
 
-export namespace RenderEngine
+export namespace engine
 {
 	class Transform
 	{

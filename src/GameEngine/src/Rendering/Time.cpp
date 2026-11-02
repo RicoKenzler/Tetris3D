@@ -2,11 +2,11 @@ module;
 
 #include <chrono>
 
-module RenderEngine.Rendering;
+module Engine.Rendering;
 
 import :Time;
 
-namespace RenderEngine
+namespace engine
 {
 	void Time::Init()
 	{

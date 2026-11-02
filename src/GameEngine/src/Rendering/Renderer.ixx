@@ -6,7 +6,7 @@ module;
 #include <dxgi1_2.h>
 #include <wrl/client.h>
 
-export module RenderEngine.Rendering:Renderer;
+export module Engine.Rendering:Renderer;
 
 export import :Camera;
 import :Mesh;
@@ -14,7 +14,7 @@ import :Renderable;
 
 using Microsoft::WRL::ComPtr;
 
-export namespace RenderEngine
+export namespace engine
 {
     class Renderer
     {

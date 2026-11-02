@@ -4,13 +4,13 @@ module;
 #include <d3d11.h>
 #include <wrl/client.h>
 
-export module RenderEngine.Rendering:Mesh;
+export module Engine.Rendering:Mesh;
 
 import :Vertex;
 
 using Microsoft::WRL::ComPtr;
 
-export namespace RenderEngine
+export namespace engine
 {
 	class Mesh
 	{

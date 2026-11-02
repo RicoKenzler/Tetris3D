@@ -2,9 +2,9 @@ module;
 
 #include <chrono>
 
-export module RenderEngine.Rendering:Time;
+export module Engine.Rendering:Time;
 
-export namespace RenderEngine
+export namespace engine
 {
 	class Time
 	{

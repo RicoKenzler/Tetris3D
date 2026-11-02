@@ -147,7 +147,10 @@
     <ClCompile Include="src\Tetris3D.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\RenderEngine\RenderEngine.vcxproj">
+    <ProjectReference Include="..\GameLogic\GameLogic.vcxproj">
+      <Project>{b6bdb726-697f-43c2-819b-c712bfde4611}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\GameEngine\GameEngine.vcxproj">
       <Project>{c364e205-9ba2-4bc5-8685-8f647fad6c93}</Project>
     </ProjectReference>
   </ItemGroup>

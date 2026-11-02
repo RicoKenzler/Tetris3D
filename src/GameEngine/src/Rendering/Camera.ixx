@@ -2,9 +2,9 @@ module;
 
 #include <DirectXMath.h>
 
-export module RenderEngine.Rendering:Camera;
+export module Engine.Rendering:Camera;
 
-export namespace RenderEngine
+export namespace engine
 {
 	class Camera
 	{

@@ -6,11 +6,11 @@ module;
 #include <dxgi1_2.h>
 #include <wrl/client.h>
 
-export module RenderEngine.Rendering:Texture;
+export module Engine.Rendering:Texture;
 
 using Microsoft::WRL::ComPtr;
 
-export namespace RenderEngine
+export namespace engine
 {
 	class Texture
 	{

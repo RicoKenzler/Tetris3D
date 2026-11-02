@@ -1,7 +1,8 @@
 #include <Windows.h>
 #include <stdexcept>
 
-import RenderEngine;
+import Engine;
+import GameLogic;
 
 _Use_decl_annotations_
 int WINAPI wWinMain(
@@ -12,8 +13,13 @@ int WINAPI wWinMain(
 {
     try
     {
-        RenderEngine::Engine engine{};
-        engine.Start(instance, showCommand);
+        engine::Engine engine{};
+		game::Game game{};
+
+        engine.Initialize(instance, showCommand, &game);
+
+        game.Initialize(&engine);
+
 		return engine.Run();
     }
     catch (const std::exception& exception)

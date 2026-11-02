@@ -2,12 +2,12 @@ module;
 
 #include <DirectXMath.h>
 
-module RenderEngine.Rendering;
+module Engine.Rendering;
 
 import :Renderable;
 import :Mesh;
 
-namespace RenderEngine
+namespace engine
 {
 	void Renderable::Init(Mesh* const mesh, Texture* const texture)
 	{
